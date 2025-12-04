@@ -213,6 +213,20 @@ def generation_loop(runner, video_path='./test_videos', output_dir='./results', 
     # get test prompts
     original_videos, _, _ = _build_test_prompts(video_path)
 
+    # Auto-set resolution to 4x of original if not specified
+    if res_h is None or res_w is None:
+        first_video = original_videos[0]
+        if is_image_file(first_video):
+            test_img = read_image(os.path.join(video_path, first_video)) / 255.0
+            orig_h, orig_w = test_img.shape[-2:]
+        else:
+            test_video, _, _ = read_video(os.path.join(video_path, first_video), output_format="TCHW")
+            orig_h, orig_w = test_video.shape[-2:]
+        
+        res_h = orig_h * 4
+        res_w = orig_w * 4
+        print(f"Auto-set resolution: {res_h}x{res_w} (4x of original {orig_h}x{orig_w})")
+
     # divide the prompts into different groups
     original_videos_group = partition_by_groups(
         original_videos,
@@ -334,11 +348,11 @@ def generation_loop(runner, video_path='./test_videos', output_dir='./results', 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser() 
-    parser.add_argument("--video_path", type=str, default="./test_img/run")
-    parser.add_argument("--output_dir", type=str, default="./results")
+    parser.add_argument("--video_path", type=str, default="./test/imgs/run")
+    parser.add_argument("--output_dir", type=str, default="./test/results")
     parser.add_argument("--seed", type=int, default=666)
-    parser.add_argument("--res_h", type=int, default=1836)
-    parser.add_argument("--res_w", type=int, default=2940)
+    parser.add_argument("--res_h", type=int, default=None)
+    parser.add_argument("--res_w", type=int, default=None)
     parser.add_argument("--sp_size", type=int, default=1)
     parser.add_argument("--out_fps", type=float, default=None)
     args = parser.parse_args()

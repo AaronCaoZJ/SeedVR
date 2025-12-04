@@ -44,7 +44,7 @@ def downscale_image(input_path, output_path=None, scale=0.5):
     # 确定输出路径
     if output_path is None:
         input_file = Path(input_path)
-        output_path = input_file.parent / f"{input_file.stem}_half{input_file.suffix}"
+        output_path = input_file.parent / f"{input_file.stem}-4{input_file.suffix}"
     
     # 保存图片
     success = cv2.imwrite(str(output_path), downscaled_img)
