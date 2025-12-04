@@ -43,6 +43,9 @@ class VideoDiffusionInfer():
         self.config = config
 
     def get_condition(self, latent: Tensor, latent_blur: Tensor, task: str) -> Tensor:
+        if latent_blur.dtype != latent.dtype:
+            latent_blur = latent_blur.to(dtype=latent.dtype)
+
         t, h, w, c = latent.shape
         cond = torch.zeros([t, h, w, c + 1], device=latent.device, dtype=latent.dtype)
         if task == "t2v" or t == 1:
@@ -80,9 +83,14 @@ class VideoDiffusionInfer():
         else:
             init_device = "cpu"
 
+        dtype_str = self.config.dit.get("dtype", "bfloat16") 
+        torch_dtype = getattr(torch, dtype_str)
+
         # Create dit model.
         with torch.device(init_device):
             self.dit = create_object(self.config.dit.model)
+            print(f"\n[DEBUG CHECK] DiT Model Device: {next(self.dit.parameters()).device}")
+            print(f"[DEBUG CHECK] DiT Model Dtype: {next(self.dit.parameters()).dtype}")
         self.dit.set_gradient_checkpointing(self.config.dit.gradient_checkpoint)
 
         if checkpoint:
@@ -93,7 +101,7 @@ class VideoDiffusionInfer():
             self.dit = meta_non_persistent_buffer_init_fn(self.dit)
 
         if device in [get_device(), "cuda"]:
-            self.dit.to(get_device())
+            self.dit.to(get_device(), dtype=torch_dtype)
 
         # Print model size.
         num_params = sum(p.numel() for p in self.dit.parameters() if p.requires_grad)
@@ -274,6 +282,8 @@ class VideoDiffusionInfer():
         if cfg_scale is None:
             cfg_scale = self.config.diffusion.cfg.scale
 
+        model_dtype = next(self.dit.parameters()).dtype
+
         # Text embeddings.
         assert type(texts_pos[0]) is type(texts_neg[0])
         if isinstance(texts_pos[0], str):
@@ -294,9 +304,19 @@ class VideoDiffusionInfer():
             text_pos_embeds, text_pos_shapes = na.flatten(texts_pos)
             text_neg_embeds, text_neg_shapes = na.flatten(texts_neg)
 
+        if isinstance(text_pos_embeds, list):
+            text_pos_embeds = [emb.to(model_dtype) for emb in text_pos_embeds]
+            text_neg_embeds = [emb.to(model_dtype) for emb in text_neg_embeds]
+        else:
+            text_pos_embeds = text_pos_embeds.to(model_dtype)
+            text_neg_embeds = text_neg_embeds.to(model_dtype)
+
         # Flatten.
         latents, latents_shapes = na.flatten(noises)
         latents_cond, _ = na.flatten(conditions)
+
+        latents = latents.to(model_dtype)
+        latents_cond = latents_cond.to(model_dtype)
 
         # Enter eval mode.
         was_training = self.dit.training

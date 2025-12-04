@@ -21,6 +21,7 @@ print(os.getcwd())
 import datetime
 from tqdm import tqdm
 import gc
+import time
 
 
 from data.image.transforms.divisible_crop import DivisibleCrop
@@ -71,7 +72,7 @@ def configure_runner(sp_size):
     config = load_config(config_path)
     runner = VideoDiffusionInfer(config)
     OmegaConf.set_readonly(runner.config, False)
-    
+
     init_torch(cudnn_benchmark=False, timeout=datetime.timedelta(seconds=3600))
     configure_sequence_parallel(sp_size)
     runner.configure_dit_model(device="cuda", checkpoint='./ckpts/seedvr2_ema_3b.pth')
@@ -256,6 +257,7 @@ def generation_loop(runner, video_path='./test_videos', output_dir='./results', 
                 ).unsqueeze(0) / 255.0
                 if sp_size > 1:
                     raise ValueError("Sp size should be set to 1 for image inputs!")
+                fps_lists.append(24.0)
             else:
                 video, _, info = read_video(
                     os.path.join(video_path, video), output_format="TCHW"
@@ -268,6 +270,9 @@ def generation_loop(runner, video_path='./test_videos', output_dir='./results', 
         ori_lengths = [video.size(1) for video in cond_latents]
         input_videos = cond_latents
         cond_latents = [cut_videos(video, sp_size) for video in cond_latents]
+
+        torch.cuda.synchronize()
+        inference_start_time = time.time()
 
         runner.dit.to("cpu")
         print(f"Encoding videos: {list(map(lambda x: x.size(), cond_latents))}")
@@ -283,6 +288,11 @@ def generation_loop(runner, video_path='./test_videos', output_dir='./results', 
 
         samples = generation_step(runner, text_embeds, cond_latents=cond_latents)
         runner.dit.to("cpu")
+
+        torch.cuda.synchronize()
+        inference_end_time = time.time()
+        print(f"Inference time: {inference_end_time - inference_start_time:.4f} seconds")
+
         del cond_latents
 
         # dump samples to the output directory
@@ -324,11 +334,11 @@ def generation_loop(runner, video_path='./test_videos', output_dir='./results', 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser() 
-    parser.add_argument("--video_path", type=str, default="./test_videos")
+    parser.add_argument("--video_path", type=str, default="./test_img/run")
     parser.add_argument("--output_dir", type=str, default="./results")
     parser.add_argument("--seed", type=int, default=666)
-    parser.add_argument("--res_h", type=int, default=720)
-    parser.add_argument("--res_w", type=int, default=1280)
+    parser.add_argument("--res_h", type=int, default=1836)
+    parser.add_argument("--res_w", type=int, default=2940)
     parser.add_argument("--sp_size", type=int, default=1)
     parser.add_argument("--out_fps", type=float, default=None)
     args = parser.parse_args()
