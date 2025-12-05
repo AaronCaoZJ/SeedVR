@@ -222,9 +222,13 @@ def generation_loop(runner, video_path='./test_videos', output_dir='./results', 
         else:
             test_video, _, _ = read_video(os.path.join(video_path, first_video), output_format="TCHW")
             orig_h, orig_w = test_video.shape[-2:]
-        
-        res_h = orig_h * 4
-        res_w = orig_w * 4
+
+        # res_h = orig_h * 4
+        # res_w = orig_w * 4
+        # res_h = orig_h * 3
+        # res_w = orig_w * 3
+        res_h = orig_h * 2
+        res_w = orig_w * 2
         print(f"Auto-set resolution: {res_h}x{res_w} (4x of original {orig_h}x{orig_w})")
 
     # divide the prompts into different groups
