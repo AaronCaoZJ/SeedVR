@@ -90,9 +90,9 @@ Install [flash-attn](https://github.com/Dao-AILab/flash-attention)
 ```bash
 pip install ninja
 # make sure nvcc -V >> 12.8
-# export PATH=/usr/local/cuda-12.8/bin:$PATH
-# export LD_LIBRARY_PATH=/usr/local/cuda-12.8/lib64:$LD_LIBRARY_PATH
-# export CUDA_HOME=/usr/local/cuda-12.8
+export PATH=/usr/local/cuda-12.8/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12.8/lib64:$LD_LIBRARY_PATH
+export CUDA_HOME=/usr/local/cuda-12.8
 pip install flash-attn --no-build-isolation --no-cache-dir
 ```
 
