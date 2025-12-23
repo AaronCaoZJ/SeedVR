@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 
 
-def downscale_image(input_path, output_path=None, scale=0.5):
+def downscale_image(input_path, output_path=None, scale=0.25):
     """
     将图片缩放到指定分辨率
     
