@@ -19,7 +19,7 @@ from huggingface_hub import snapshot_download
 from huggingface_hub import snapshot_download
 
 save_dir = "/home/zhijun/Code/SeedVR/ckpts/"
-repo_id = "ByteDance-Seed/SeedVR2-7B"
+repo_id = "ByteDance-Seed/SeedVR2-3B"
 cache_dir = save_dir + "/cache"
 
 snapshot_download(cache_dir=cache_dir,

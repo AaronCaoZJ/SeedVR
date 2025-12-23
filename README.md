@@ -147,7 +147,7 @@ torchrun --nproc-per-node=1 -m projects.inference_seedvr2_3b
 # or change the scaler at about line 230 in `SeedVR/projects/inference_seedvr2_3b.py`
 # res_h = orig_h * 2 (scaler)
 # res_w = orig_w * 2
-torchrun --nproc-per-node=1 -m projects/inference_seedvr2_3b.py \
+torchrun --nproc-per-node=1 -m projects.inference_seedvr2_3b \
     --video_path INPUT_FOLDER/run \
     --output_dir OUTPUT_FOLDER \
     --seed SEED_NUM \

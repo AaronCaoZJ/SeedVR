@@ -1302,7 +1302,8 @@ class VideoAutoencoderKLWrapper(VideoAutoencoderKL):
         if x.ndim == 4:
             x = x.unsqueeze(2)
         p = super().encode(x).latent_dist
-        z = p.sample().squeeze(2)
+        # z = p.sample().squeeze(2)
+        z = p.mode().squeeze(2)
         return CausalEncoderOutput(z, p)
 
     def decode(self, z: torch.FloatTensor) -> CausalDecoderOutput:
